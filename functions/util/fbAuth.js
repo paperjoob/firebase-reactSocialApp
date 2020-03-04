@@ -27,6 +27,7 @@ module.exports = (request, response, next) => {
             // add a property to our request user
             // take the first element, the data() function to extract the handle property from the DB collection
             request.user.handle = data.docs[0].data().handle;
+            // request.user.imageUrl = data.docs[0].data().imageUrl;
             return next(); // allows the request to proceed to the next step
         })
         .catch(error => {
