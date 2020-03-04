@@ -68,6 +68,26 @@ app.post('/scream', (request, response) => {
     });
 });
 
+// takes a string parameter - check if string is empty
+const isEmpty = (string) => {
+    if (string.trim() === '') {
+        return true
+    } else {
+        return false;
+    }
+}
+
+// checks if email is valid
+const isEmail = (email) => {
+    // checks for pattern of an email
+    const emailRegEx = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+    if (email.match(emailRegEx)) {
+        return true;
+    } else {
+        return false;
+    }
+}
+
 // Signup Route
 app.post('/signup', (request, response) => {
     const newUser = {
@@ -76,6 +96,32 @@ app.post('/signup', (request, response) => {
         confirmPassword: request.body.confirmPassword,
         handle: request.body.handle,
     };
+
+    let errors = {};
+
+    // if the email is empty
+    if (isEmpty(newUser.email)) {
+        errors.email = "Email must not be empty.";
+    } else if (!isEmail(newUser.email)) { // check if a valid email
+        errors.email = "Must be a valid email address.";
+    }
+
+    // checks if the password field is empty
+    if (isEmpty(newUser.password)) {
+        errors.password = "Password must not be empty.";
+    }
+    // checks password and confirmPassword
+    if (newUser.password !== newUser.confirmPassword) {
+        errors.confirmPassword = "Passwords must match."
+    }
+    if (isEmpty(newUser.handle)) {
+        errors.handle = "Handle must not be empty.";
+    }
+
+    // if there are errors in the object (greater than 0), break and return the errors
+    if (Object.keys(errors).length > 0) {
+        return response.status(400).json(errors);
+    }
 
     // to do: validate data
     let token;
@@ -119,7 +165,48 @@ app.post('/signup', (request, response) => {
                 return response.status(500).json( {error: err.code });
             }
         })
-})
+});
+
+
+// start login
+app.post('/login', (request, response) => {
+    const user = {
+        email: request.body.email,
+        password: request.body.password
+    };
+
+    let errors = {};
+
+    if (isEmpty(user.email)) {
+        errors.email = "Email must not be empty.";
+    };
+    if (isEmpty(user.password)) {
+        errors.password = "Password must not be empty.";
+    };
+
+    if (Object.keys(errors).length > 0) {
+        return response.status(400).json(errors);
+    }
+
+    firebase.auth().signInWithEmailAndPassword(user.email, user.password)
+        .then(data => {
+            return data.user.getIdToken();
+        })
+        .then(token => {
+            return response.json({token});
+        })
+        .catch(error => {
+            console.error(error);
+            if(error.code === 'auth/wrong-password') {
+                return response.status(403).json( {general: 'Wrong credentials. Please try again.'} );
+            } else {
+                return response.status(500).json({error: error.code});
+            }
+        })
+
+
+
+}); // end login
 
 // https://baseurl.com/api/
 // can return multiple routes
