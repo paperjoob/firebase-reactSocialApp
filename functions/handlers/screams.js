@@ -29,14 +29,19 @@ exports.postOneScream = (request, response) => {
     const newScream = {
         body: request.body.body, // our request has a body - then add the properties
         userHandle: request.user.handle,
-        createdAt: new Date().toISOString()
+        userImage: request.user.imageUrl,
+        createdAt: new Date().toISOString(),
+        likeCount: 0,
+        commentCount: 0
     };
 
     // persist the object into the database by passing the scream object
     db.collection('screams').add(newScream)
     .then(doc => {
         // send a json response that the scream has been added successfully
-        response.json( {message: `Document ${doc.id} created successfully.`} );
+        const responseScream = newScream;
+        responseScream.screamId = doc.id;
+        response.json(responseScream);
     })
     .catch((error) => {
         response.status(500).json( {error: 'Something went wrong with creating a new scream.'} );
