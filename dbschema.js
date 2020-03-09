@@ -30,5 +30,13 @@ const userDetails = {
             userHandle: 'User2',
             screamId: 'ksdfssdss'
         }
+    ],
+    comments: [
+        {
+            userHandle: 'user',
+            screamId: 'dsjfoweigjsdg',
+            body: 'This is the body of the comment!',
+            createdAt: '2020-03-03T22:00:07.605Z'
+        }
     ]
 };

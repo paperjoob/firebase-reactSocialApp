@@ -43,3 +43,71 @@ exports.postOneScream = (request, response) => {
         console.error(error);
     });
 }; // end post one scream
+
+// Get One Scream by Its ID
+exports.getScream = (request, response) => {
+    let screamData = {};
+
+    db.doc(`/screams/${request.params.screamId}`).get()
+        .then(doc => {
+            // if the document doesn't exist, return a status of 404 not found and the message below
+            if(!doc.exists) {
+                return response.status(404).json({ error: 'Scream not found.'})
+            }
+            screamData = doc.data();
+            screamData.screamId = doc.id; // assign screamdata.screamid to the document id
+            // fetch comments collention where screamid is equal to that comment
+            return db.collection('comments')
+                .orderBy('createdAt', 'desc')
+                .where('screamId', '==', request.params.screamId)
+                .get();
+            })
+            .then(data => {
+                screamData.comments = [];
+                // for each document with that ID, push that into the comments screamdata array
+                data.forEach(doc => {
+                    screamData.comments.push(doc.data())
+                });
+                return response.json(screamData);
+            })
+            .catch(error => {
+                console.error(error);
+                response.status(500).json({error: error.code})
+            })
+}; // end getScream by its ID
+
+// POST A Comment on A Specific Scream
+exports.commentOnScream = (request, response) => {
+    // if the comment body is empty, show the error below
+    if(request.body.body.trim() === '') {
+        return response.status(400).json({error: 'Comment must not be empty.'});
+    }
+    // new comment holds all this data
+    const newComment = {
+        body: request.body.body,
+        createdAt: new Date().toISOString(),
+        screamId: request.params.screamId,
+        userHandle: request.user.handle, // passed from the middleware
+        userImage: request.user.imageUrl
+    };
+    db.doc(`/screams/${request.params.screamId}`)
+    .get()
+    .then((doc) => {
+     // if the scream does not exist
+      if (!doc.exists) {
+        return res.status(404).json({ error: 'Scream not found' });
+      }
+    //   return doc.ref.update({ commentCount: doc.data().commentCount + 1 });
+    })
+    .then(() => {
+      return db.collection('comments').add(newComment);
+    })
+    .then(() => {
+    // return the comment back to the user
+      response.json(newComment);
+    })
+    .catch((err) => {
+      console.log(err);
+      response.status(500).json({ error: 'Something went wrong' });
+    });
+}; // end commonOnScream
