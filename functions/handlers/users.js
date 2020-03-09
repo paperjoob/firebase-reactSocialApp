@@ -171,7 +171,10 @@ exports.uploadImage = (request, response) => {
         file.pipe(fs.createWriteStream(filepath));
     });
     busboy.on('finish', () => {
-        admin.storage().bucket(`${config.storageBucket}`).upload(imageToBeUploaded.filepath, {
+        admin
+        .storage()
+        .bucket(`${config.storageBucket}`)
+        .upload(imageToBeUploaded.filepath, {
             resumable: false,
             metadata: {
                 metadata: {
@@ -182,7 +185,9 @@ exports.uploadImage = (request, response) => {
         .then(() => {
             // construct the image URL to add it to the user
             // by adding the alt media, it shows it on the browser instead of downloading it
-            const imageUrl = `https://firebasestorage.googleapis.com/v0/b/${config.storageBucket}/o/${imageFileName}?alt=media`;
+            const imageUrl = `https://firebasestorage.googleapis.com/v0/b/${
+                config.storageBucket
+              }/o/${imageFileName}?alt=media`;
             return db.doc(`/users/${request.user.handle}`).update({ imageUrl: imageUrl}); // lets us access the 
         })
         .then(() => {
