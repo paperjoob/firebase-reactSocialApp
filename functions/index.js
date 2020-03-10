@@ -90,6 +90,55 @@ exports.createNotificationOnComment = functions.firestore.document('comments/{id
       });
 }); // end Notification on a Comment
 
+exports.onUserImageChange = functions.firestore.document('users/{userId}')
+    .onUpdate((change) => {
+        console.log(change.before.data(), "before");
+        console.log(change.after.data(), "after change");
+        let batch = db.batch(); // multiple documents being updated
+        // execute this only if the image URL has changed
+        if (change.before.data().imageUrl !== change.after.data().imageUrl) {
+            return db.collection('screams').where('userHandle', '==', change.before.data().handle).get()
+            .then(data => {
+                data.forEach(doc => {
+                    const scream = db.doc(`/screams/${doc.id}`); // document ID
+                    batch.update(scream, {userImage: change.after.data().imageUrl});
+                })
+                return batch.commit(); // commit the update to the database
+            });
+        } else {
+            return true;
+        }
+}); // end onUserImage Change
+
+// on screamDelete
+exports.onScreamDelete = functions.firestore.document('/screams/{screamId}')
+    .onDelete((snapshot, context) => {
+        const screamId = context.params.screamId;
+        const batch = db.batch();
+        return db.collection('comments').where('screamId', '==', screamId).get()
+            .then((data) => {
+            data.forEach((doc) => {
+                batch.delete(db.doc(`/comments/${doc.id}`)); // delete a comment by its Doc ID by the Scream
+            });
+            return db.collection('likes').where('screamId', '==', screamId).get();
+            })
+            .then((data) => {
+            data.forEach((doc) => {
+                batch.delete(db.doc(`/likes/${doc.id}`)); // delete likes by its Doc Id by the Scream
+            });
+            return db.collection('notifications').where('screamId', '==', screamId).get();
+            })
+            .then((data) => {
+            data.forEach((doc) => {
+                batch.delete(db.doc(`/notifications/${doc.id}`)); // delete notifications under this Scream
+            });
+            return batch.commit();
+            })
+            .catch(error => {
+                console.error(error);
+            })
+ }); // end onScreamDelete
+
 // https://baseurl.com/api/
 // can return multiple routes
 exports.api = functions.https.onRequest(app);
