@@ -38,5 +38,15 @@ const userDetails = {
             body: 'This is the body of the comment!',
             createdAt: '2020-03-03T22:00:07.605Z'
         }
+    ],
+    notifications: [
+        {
+            recipient: 'user',
+            sender: 'john',
+            read: 'true | false',
+            screamId: 'ksldfjsdfs',
+            type: 'like | comment',
+            createdAt: '2020-03-03T22:00:07.605Z'
+        }
     ]
 };
